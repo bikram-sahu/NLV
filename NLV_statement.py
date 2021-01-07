@@ -46,16 +46,16 @@ def upload_data():
 
     
 def compute_NLV():
-    
+    col1, col2 = st.beta_columns(2)
     currency_spot_today = pd.read_excel(EDF_file, sheet_name = "Control Account", nrows= 6)
     currency_spot_today = currency_spot_today[["Currency Code", "Spot Rate"]]
     currency_spot_today.set_index("Currency Code", inplace =True) 
-    st.write(currency_spot_today)
+    col1.write(currency_spot_today)
 
     currency_spot_yest = pd.read_excel(EDF_file_yest, sheet_name = "Control Account", nrows= 6)
     currency_spot_yest = currency_spot_yest[["Currency Code", "Spot Rate"]]
     currency_spot_yest.set_index("Currency Code", inplace =True) 
-    st.write(currency_spot_yest)
+    col2.write(currency_spot_yest)
 
     EDF_clearisk["Spot Rate"] = EDF_clearisk["Currency"].apply(lambda x: currency_spot_today.loc[x, 'Spot Rate'])
     EDF_clearisk["Clearisk(USD)"] = EDF_clearisk["Clearisk Net Liquid Value (A)"]/ EDF_clearisk["Spot Rate"]

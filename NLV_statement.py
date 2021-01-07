@@ -2,6 +2,7 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 import os
+import copy
 
 def main():
     st.sidebar.title("NLV Generation")
@@ -45,6 +46,7 @@ def upload_data():
 
     
 def compute_NLV():
+    
     currency_spot_today = pd.read_excel(EDF_file, sheet_name = "Control Account", nrows= 6)
     currency_spot_today = currency_spot_today[["Currency Code", "Spot Rate"]]
     currency_spot_today.set_index("Currency Code", inplace =True) 
@@ -57,23 +59,31 @@ def compute_NLV():
 
     EDF_clearisk["Spot Rate"] = EDF_clearisk["Currency"].apply(lambda x: currency_spot_today.loc[x, 'Spot Rate'])
     EDF_clearisk["Clearisk(USD)"] = EDF_clearisk["Clearisk Net Liquid Value (A)"]/ EDF_clearisk["Spot Rate"]
-    EDF_clearisk["Commision"] = (EDF_clearisk["Clearisk Market Fee (B)"] + EDF_clearisk["Clearisk Clr Comms (C)"])/ EDF_clearisk["Spot Rate"] 
+    EDF_clearisk["Commission(USD)"] = (EDF_clearisk["Clearisk Market Fee (B)"] + EDF_clearisk["Clearisk Clr Comms (C)"])/ EDF_clearisk["Spot Rate"] 
     st.write(EDF_clearisk)
 
     EDF_clearisk_yest["Spot Rate"] = EDF_clearisk_yest["Currency"].apply(lambda x: currency_spot_yest.loc[x, 'Spot Rate'])
     EDF_clearisk_yest["Clearisk(USD)"] = EDF_clearisk_yest["Clearisk Net Liquid Value (A)"]/ EDF_clearisk_yest["Spot Rate"]
-    EDF_clearisk_yest["Commision"] = (EDF_clearisk_yest["Clearisk Market Fee (B)"] + EDF_clearisk_yest["Clearisk Clr Comms (C)"])/ EDF_clearisk_yest["Spot Rate"] 
+    EDF_clearisk_yest["Commission(USD)"] = (EDF_clearisk_yest["Clearisk Market Fee (B)"] + EDF_clearisk_yest["Clearisk Clr Comms (C)"])/ EDF_clearisk_yest["Spot Rate"] 
     st.write(EDF_clearisk_yest)
 
+    data_today = copy.deepcopy(EDF_clearisk)
+    data_yest = copy.deepcopy(EDF_clearisk_yest)
+    
+    data_today = data_today[["Client", "Clearisk(USD)", "Commission(USD)"]]
+    data_yest = data_yest[["Client", "Clearisk(USD)", "Commission(USD)"]]
+    data_today = data_today.groupby(["Client"], as_index=False).sum()
+    data_yest = data_yest.groupby(["Client"], as_index=False).sum()
+    st.write(data_today)
+    st.write(data_yest)
 
-
-
-
-
+    data_today["Change"] = data_today["Clearisk(USD)"] - data_yest["Clearisk(USD)"]
+    st.write(data_today)
 
     
 
-
 if __name__ == "__main__":
     main()
+
+
 

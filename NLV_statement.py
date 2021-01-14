@@ -40,6 +40,9 @@ def upload_data():
     volume_file = st.file_uploader('Etrade daily volume report for today')
     if volume_file is not None:
         volume_data = pd.read_csv(volume_file, skiprows=1, header=None)
+        volume_data.drop_duplicates(inplace=True)
+        volume_data.columns = ["Duplicate","Client", "Volume"]
+        volume_data.drop(columns =  ["Duplicate"], inplace=True)
         volume_data.dropna(inplace=True)
         if st.checkbox('Show volume data'):
             st.write(volume_data)
@@ -49,12 +52,14 @@ def compute_NLV():
     col1, col2 = st.beta_columns(2)
     currency_spot_today = pd.read_excel(EDF_file, sheet_name = "Control Account", nrows= 6)
     currency_spot_today = currency_spot_today[["Currency Code", "Spot Rate"]]
-    currency_spot_today.set_index("Currency Code", inplace =True) 
+    currency_spot_today.set_index("Currency Code", inplace =True)
+    col1.write('Today') 
     col1.write(currency_spot_today)
 
     currency_spot_yest = pd.read_excel(EDF_file_yest, sheet_name = "Control Account", nrows= 6)
     currency_spot_yest = currency_spot_yest[["Currency Code", "Spot Rate"]]
-    currency_spot_yest.set_index("Currency Code", inplace =True) 
+    currency_spot_yest.set_index("Currency Code", inplace =True)
+    col2.write('Previous day') 
     col2.write(currency_spot_yest)
 
     EDF_clearisk["Spot Rate"] = EDF_clearisk["Currency"].apply(lambda x: currency_spot_today.loc[x, 'Spot Rate'])
@@ -75,9 +80,13 @@ def compute_NLV():
     data_today = data_today.groupby(["Client"], as_index=False).sum()
     data_yest = data_yest.groupby(["Client"], as_index=False).sum()
     st.write(data_today)
+    data_yest.rename(columns={"Clearisk(USD)": "Clearisk_T-1(USD)"})
     st.write(data_yest)
-
+    
     data_today["Change"] = data_today["Clearisk(USD)"] - data_yest["Clearisk(USD)"]
+    data_today = data_today.merge(volume_data, on = "Client")
+    #data_today = data_today.insert(2, "Clearisk_T-1(USD)", data_yest["Clearisk_T-1(USD)"])
+
     st.write(data_today)
 
     

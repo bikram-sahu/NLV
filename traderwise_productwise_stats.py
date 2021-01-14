@@ -42,8 +42,13 @@ def run_analytics(analytics_by):
         st.write(qtr_data.groupby(['Client']).sum())
         by_client = qtr_data.groupby(['Client'])
         st.bar_chart(by_client.sum()["Total"])
+        st.markdown("**Traderwise Stats**")
         client_num = st.text_input("Enter Client number", "EE000")
-        st.write(by_client.get_group(client_num))
+        #st.write(by_client.get_group(client_num))
+        per_client = by_client.get_group(client_num)
+        st.write(per_client.groupby(["Contract Group"]).sum())
+
+
 
     if analytics_by == "by Contract Group":
         st.write(qtr_data.groupby(['Contract Group']).sum())

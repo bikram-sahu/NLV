@@ -27,7 +27,7 @@ def upload_data():
         if st.checkbox('Show data for today'):
             st.write(qtr_data)
 
-    volume_file = st.file_uploader('Etrade daily volume report for today')
+    volume_file = st.file_uploader('Volume data')
     if volume_file is not None:
         volume_data = pd.read_csv(volume_file, skiprows=1, header=None)
         volume_data.drop_duplicates(inplace=True)

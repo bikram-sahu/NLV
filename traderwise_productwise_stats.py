@@ -63,16 +63,16 @@ def main():
                 #upload_data()
                 productwise_data = "/Gross PNL By Product (20).xlsx"
                 transaction_data_file = "/Transactions Jan-21.xlsx"
-                load_data(productwise_data, transaction_data_file)
+                qtr_data, transaction_data = load_data(productwise_data, transaction_data_file)
                 analytics_by = st.sidebar.selectbox("Select", ["by Client", "Overall Stats"])
-                run_analytics(analytics_by)
+                run_analytics(analytics_by, qtr_data, transaction_data)
             else:
                 st.warning("Incorrect Username/Password")
 
 @st.cache
 def load_data(productwise_data, transaction_data_file):
     #st.date_input('Date input (currently this is not linked)')
-    global qtr_data, volume_data, transaction_data
+    global qtr_data, transaction_data
 
     _, f = dbx.files_download(productwise_data)
     f = f.content
@@ -89,11 +89,12 @@ def load_data(productwise_data, transaction_data_file):
     transaction_data.drop(columns = ["Grand Total"], inplace=True)
     transaction_data.set_index("Row Labels", inplace=True)
     #st.write(transaction_data)
+    return qtr_data, transaction_data
     
 
     
 
-def run_analytics(analytics_by):
+def run_analytics(analytics_by, qtr_data, transaction_data):
     if analytics_by == "by Client":
         
         by_client = qtr_data.groupby(['Client'], as_index=False)

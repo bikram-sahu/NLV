@@ -2,3 +2,4 @@ numpy==1.19.1
 streamlit==0.73.1
 pandas==1.2.0
 openpyxl==3.0.5
+xlrd==2.0.1

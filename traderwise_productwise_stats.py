@@ -76,14 +76,14 @@ def load_data():
     _, f = dbx.files_download(productwise_data)
     f = f.content
 
-    qtr_data = pd.read_excel(f, sheet_name = "Gross PNL By Product")
+    qtr_data = pd.read_excel(f, sheet_name = "Gross PNL By Product", engine='openpyxl')
     qtr_data = qtr_data[qtr_data['Client'].map(len) <= 5]
     qtr_data.drop(columns = ["Contract Type", "Base Currency", "AUD", "CAD", "CHF", "EUR", "GBP", "HKD", "JPY", "NOK", "SEK", "USD"], inplace=True)
     #if st.checkbox('Show data'):
     #    st.write(qtr_data)
     _, f = dbx.files_download(transaction_data_file)
     f = f.content
-    transaction_data = pd.read_excel(f, sheet_name="Sheet2", skiprows = 1)
+    transaction_data = pd.read_excel(f, sheet_name="Sheet2", engine='openpyxl', skiprows = 1)
     transaction_data.drop([len(transaction_data)-1], inplace=True)
     transaction_data.drop(columns = ["Grand Total"], inplace=True)
     transaction_data.set_index("Row Labels", inplace=True)

@@ -4,6 +4,12 @@ import pandas as pd
 import os
 import copy
 
+import dropbox
+
+token = "ogCBN3Of8vMAAAAAAAAAAeokgvH2eZ1cGgVSQDOqLNFkOYKqykgroZ8O9jfc_mMi"
+dbx = dropbox.Dropbox(token)
+
+
 # Security
 #passlib,hashlib,bcrypt,scrypt
 import hashlib
@@ -61,37 +67,23 @@ def main():
             else:
                 st.warning("Incorrect Username/Password")
 
-def upload_data():
-    global qtr_data, volume_data
-    productwise_data = st.file_uploader('Upload productwise data')
-    if productwise_data is not None:
-        qtr_data = pd.read_excel(productwise_data, sheet_name = "Gross PNL By Product")
-        qtr_data.drop(columns = ["Contract Type", "Base Currency", "AUD", "CAD", "CHF", "EUR", "GBP", "HKD", "JPY", "NOK", "SEK", "USD"], inplace=True)
-        #qtr_data.dropna(inplace=True)
-        if st.checkbox('Show data for today'):
-            st.write(qtr_data)
-
-    volume_file = st.file_uploader('Volume data')
-    if volume_file is not None:
-        volume_data = pd.read_csv(volume_file, skiprows=1, header=None)
-        volume_data.drop_duplicates(inplace=True)
-        volume_data.columns = ["Duplicate","Client", "Volume"]
-        volume_data.drop(columns =  ["Duplicate"], inplace=True)
-        volume_data.dropna(inplace=True)
-        if st.checkbox('Show volume data'):
-            st.write(volume_data)
 
 def load_data():
-    st.date_input('Date input (currently this is not linked)')
+    #st.date_input('Date input (currently this is not linked)')
     global qtr_data, volume_data, transaction_data
-    productwise_data = "Gross PNL By Product (20).xlsx"
-    transaction_data_file = "Transactions Jan-21.xlsx"
-    qtr_data = pd.read_excel(productwise_data, sheet_name = "Gross PNL By Product")
+    productwise_data = "/Gross PNL By Product (20).xlsx"
+    transaction_data_file = "/Transactions Jan-21.xlsx"
+    _, f = dbx.files_download(productwise_data)
+    f = f.content
+
+    qtr_data = pd.read_excel(f, sheet_name = "Gross PNL By Product")
     qtr_data = qtr_data[qtr_data['Client'].map(len) <= 5]
     qtr_data.drop(columns = ["Contract Type", "Base Currency", "AUD", "CAD", "CHF", "EUR", "GBP", "HKD", "JPY", "NOK", "SEK", "USD"], inplace=True)
-    if st.checkbox('Show data'):
-        st.write(qtr_data)
-    transaction_data = pd.read_excel(transaction_data_file, sheet_name="Sheet2", skiprows = 1)
+    #if st.checkbox('Show data'):
+    #    st.write(qtr_data)
+    _, f = dbx.files_download(transaction_data_file)
+    f = f.content
+    transaction_data = pd.read_excel(f, sheet_name="Sheet2", skiprows = 1)
     transaction_data.drop([len(transaction_data)-1], inplace=True)
     transaction_data.drop(columns = ["Grand Total"], inplace=True)
     transaction_data.set_index("Row Labels", inplace=True)
@@ -105,7 +97,7 @@ def run_analytics(analytics_by):
         
         by_client = qtr_data.groupby(['Client'], as_index=False)
         #st.write(type(by_client))
-        st.write(qtr_data.groupby(['Client'], as_index=False).sum())
+        #st.write(qtr_data.groupby(['Client'], as_index=False).sum())
         #st.bar_chart(by_client.sum()["Total"])
 
         with open("mumbai_traders.txt") as file:

@@ -4,6 +4,9 @@ import pandas as pd
 import os
 import copy
 
+from st_aggrid import AgGrid
+from st_aggrid import GridOptionsBuilder, AgGrid, GridUpdateMode, DataReturnMode, JsCode
+
 import dropbox
 
 token = "ogCBN3Of8vMAAAAAAAAAAeokgvH2eZ1cGgVSQDOqLNFkOYKqykgroZ8O9jfc_mMi"
@@ -46,7 +49,7 @@ def view_all_users():
 
 
 def main():
-    st.title("Month to Date Productwise Statistics")
+    st.sidebar.title("Month to Date Productwise Statistics")
     app_mode = st.sidebar.selectbox("Mode",
                                     ["Login"])
 
@@ -63,9 +66,11 @@ def main():
                 #upload_data()
                 productwise_data = "/Gross PNL By Product (20).xlsx"
                 transaction_data_file = "/Transactions Jan-21.xlsx"
+                MIS_file_name = "/MIS Mumbai.xlsx"
+                MIS_data = load_MIS_data(MIS_file_name)
                 qtr_data, transaction_data = load_data(productwise_data, transaction_data_file)
-                analytics_by = st.sidebar.selectbox("Select", ["by Client", "Overall Stats"])
-                run_analytics(analytics_by, qtr_data, transaction_data)
+                analytics_by = st.sidebar.selectbox("Select", ["by Client", "Overall Stats", "MIS"])
+                run_analytics(analytics_by, qtr_data, transaction_data, MIS_data)
             else:
                 st.warning("Incorrect Username/Password")
 
@@ -90,11 +95,31 @@ def load_data(productwise_data, transaction_data_file):
     transaction_data.set_index("Row Labels", inplace=True)
     #st.write(transaction_data)
     return qtr_data, transaction_data
-    
+
+@st.cache
+def load_MIS_data(MIS_file_name):
+    global MIS_data
+
+    _, f = dbx.files_download(MIS_file_name)
+    f = f.content
+
+    MIS_data = pd.read_excel(f, sheet_name = "Stats", engine='openpyxl', skiprows=1, nrows= 54)
+    MIS_data.drop(columns = ["Unnamed: 4", "Unnamed: 8", "Unnamed: 12"], inplace= True)
+    return MIS_data
+
+@st.cache
+def color_negative_red(val):
+    """
+    Takes a scalar and returns a string with
+    the css property `'color: red'` for negative
+    strings, black otherwise.
+    """
+    color = 'red' if val < 0 else 'black'
+    return 'color: %s' % color
 
     
 
-def run_analytics(analytics_by, qtr_data, transaction_data):
+def run_analytics(analytics_by, qtr_data, transaction_data, MIS_data):
     if analytics_by == "by Client":
         
         by_client = qtr_data.groupby(['Client'], as_index=False)
@@ -106,7 +131,7 @@ def run_analytics(analytics_by, qtr_data, transaction_data):
             mumbai_traders_list = [line.strip() for line in file]
         #by_client[by_client["Client"] =]
         
-        st.markdown("**Traderwise Stats**")
+        st.markdown("**Traderwise Stats (Mumbai)**")
         #client_num = st.selectbox("Select a Client Id", qtr_data['Client'].unique())
         client_num = st.selectbox("Select a Client Id", mumbai_traders_list)
         per_client = by_client.get_group(client_num)
@@ -120,14 +145,55 @@ def run_analytics(analytics_by, qtr_data, transaction_data):
         df2 = transaction_data.loc[client_num].fillna(0).div(2)
 
         df1["RT"] = df1["Contract Code"].apply(lambda x: df2.loc[x])
-        #st.markdown("**TEST**")
         st.write(df1)
         
+        
 
-    if analytics_by == "Overall Stats":
+    elif analytics_by == "Overall Stats":
         st.write(qtr_data.groupby(['Contract Group']).sum())
         by_contract = qtr_data.groupby(['Contract Group']).sum() 
         st.bar_chart(by_contract["Total"])
+
+    elif analytics_by == "MIS":
+        #MIS_data = MIS_data.style.applymap(color_negative_red)
+        df = MIS_data.round(1)
+        gb = GridOptionsBuilder.from_dataframe(df)
+        cellsytle_jscode = JsCode("""
+        function(params) {
+            if (params.value <= 0.5) {
+                return {
+                    'color': 'white',
+                    'backgroundColor': 'red'
+                }
+            } else {
+                return {
+                    'color': 'black',
+                    'backgroundColor': 'white'
+                }
+            }
+        };
+        """)
+        gb.configure_column("% of Up days", cellStyle=cellsytle_jscode)
+        gb.configure_grid_options(domLayout='normal')
+        gridOptions = gb.build()
+
+        #Display the grid
+        with st.spinner("Loading Grid..."):
+            st.header("Streamlit Ag-Grid")
+            grid_response = AgGrid(
+                df, 
+                gridOptions=gridOptions, 
+                width='100%',
+                allow_unsafe_jscode=True, #Set it to True to allow jsfunction to be injected
+                )
+
+        df = grid_response['data']
+        selected = grid_response['selected_rows']
+        selected_df = pd.DataFrame(selected)
+        #AgGrid(df)
+
+    
+
 
 
 if __name__ == "__main__":

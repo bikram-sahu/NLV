@@ -61,18 +61,19 @@ def main():
             if result:
                 st.sidebar.success("Logged In as {}".format(username))
                 #upload_data()
-                load_data()
+                productwise_data = "/Gross PNL By Product (20).xlsx"
+                transaction_data_file = "/Transactions Jan-21.xlsx"
+                load_data(productwise_data, transaction_data_file)
                 analytics_by = st.sidebar.selectbox("Select", ["by Client", "Overall Stats"])
                 run_analytics(analytics_by)
             else:
                 st.warning("Incorrect Username/Password")
 
-
-def load_data():
+@st.cache
+def load_data(productwise_data, transaction_data_file):
     #st.date_input('Date input (currently this is not linked)')
     global qtr_data, volume_data, transaction_data
-    productwise_data = "/Gross PNL By Product (20).xlsx"
-    transaction_data_file = "/Transactions Jan-21.xlsx"
+
     _, f = dbx.files_download(productwise_data)
     f = f.content
 

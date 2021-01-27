@@ -145,7 +145,42 @@ def run_analytics(analytics_by, qtr_data, transaction_data, MIS_data):
         df2 = transaction_data.loc[client_num].fillna(0).div(2)
 
         df1["RT"] = df1["Contract Code"].apply(lambda x: df2.loc[x])
-        st.write(df1)
+        df = df1.round(1)
+        ########LAST EDIT##########
+        #st.write(df1)
+        gb = GridOptionsBuilder.from_dataframe(df)
+        cellsytle_jscode = JsCode("""
+        function(params) {
+            if (params.value < 0) {
+                return {
+                    'color': 'white',
+                    'backgroundColor': 'red'
+                }
+            } else {
+                return {
+                    'color': 'white',
+                    'backgroundColor': 'green'
+                }
+            }
+        };
+        """)
+        gb.configure_column("Total", cellStyle=cellsytle_jscode)
+        gb.configure_grid_options(domLayout='normal')
+        gridOptions = gb.build()
+
+        #Display the grid
+        with st.spinner("Loading Grid..."):
+            #st.header("Streamlit Ag-Grid")
+            grid_response = AgGrid(
+                df, 
+                gridOptions=gridOptions, 
+                width='100%',
+                allow_unsafe_jscode=True, #Set it to True to allow jsfunction to be injected
+                )
+
+        df = grid_response['data']
+        selected = grid_response['selected_rows']
+        selected_df = pd.DataFrame(selected)
         
         
 

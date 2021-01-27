@@ -64,7 +64,7 @@ def main():
             if result:
                 st.sidebar.success("Logged In as {}".format(username))
                 #upload_data()
-                productwise_data = "/Gross PNL By Product (20).xlsx"
+                productwise_data = "/MTDPL.xlsx"
                 transaction_data_file = "/Transactions Jan-21.xlsx"
                 MIS_file_name = "/MIS Mumbai.xlsx"
                 MIS_data = load_MIS_data(MIS_file_name)

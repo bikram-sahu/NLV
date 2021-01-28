@@ -189,8 +189,9 @@ def run_analytics(analytics_by, qtr_data, transaction_data, transaction_raw, ins
                       by_contract_code,  
                       on ='Instruments')
         
-        #sum_Total = inner_join["Total"].sum()
-        #st.write(int(sum_Total))
+        sum_Total = inner_join["Total"].sum()
+        st.write("MTD Total PnL:", int(sum_Total))
+        st.write("MTD Sum of Qty:", int(inner_join["Sum of Qty"].sum()))
 
         inner_join = inner_join.style.applymap(color_negative_red, subset=pd.IndexSlice[:, ['Total']])
         st.dataframe(inner_join.format({'Sum of Qty': '{:.0f}', 'Total': '{:.0f}'}), height=2500)

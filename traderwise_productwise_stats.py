@@ -127,6 +127,7 @@ def color_negative_red(val):
 
 def run_analytics(analytics_by, qtr_data, transaction_data, transaction_raw, instrument_name):
     if analytics_by == "Mumbai":
+        st.write(transaction_data)
         by_client = qtr_data.groupby(['Client'], as_index=False)
         
 
@@ -187,6 +188,10 @@ def run_analytics(analytics_by, qtr_data, transaction_data, transaction_raw, ins
         inner_join = pd.merge(transaction_raw,  
                       by_contract_code,  
                       on ='Instruments')
+        
+        #sum_Total = inner_join["Total"].sum()
+        #st.write(int(sum_Total))
+
         inner_join = inner_join.style.applymap(color_negative_red, subset=pd.IndexSlice[:, ['Total']])
         st.dataframe(inner_join.format({'Sum of Qty': '{:.0f}', 'Total': '{:.0f}'}), height=2500)
     

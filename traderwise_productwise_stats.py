@@ -150,19 +150,32 @@ def run_analytics(analytics_by, qtr_data, transaction_data, transaction_raw, ins
             df11["RT"] = df11["Contract Code"].apply(lambda x: df22.loc[x])
             result = pd.concat([mumbai, df11])
             mumbai = result
+
         contract_names = copy.deepcopy(transaction_raw)
         contract_names.drop(columns=["Sum of Qty"], inplace=True)
         contract_names = contract_names.rename(columns={"Instruments": "Contract Code"}, errors="raise") 
+
+        sum_Total = df1["Total"].sum()
+        sum_RT = df1["RT"].sum()
         df1 = df1.style.applymap(color_negative_red, subset=pd.IndexSlice[:, ['Total']])
         st.dataframe(df1.format({'RT': '{:.0f}', 'Total': '{:.0f}'}), height=2500)
+
+        st.write("Total PnL: ", int(sum_Total))
+        st.write("Total RT: ", int(sum_RT))
 
         st.markdown("**All Traders (Mumbai)**")
         mumbai = mumbai.groupby("Contract Code", as_index=False).sum()
         mumbai_final = pd.merge(contract_names,  
                       mumbai,  
                       on ='Contract Code')
+
+        sum_Total = mumbai_final["Total"].sum()
+        sum_RT = mumbai_final["RT"].sum()
         mumbai_final = mumbai_final.style.applymap(color_negative_red, subset=pd.IndexSlice[:, ['Total']])
         st.dataframe(mumbai_final.format({"RT": '{:.0f}', 'Total': '{:.0f}'}), height=2500)
+        st.write("Total PnL: ", int(sum_Total))
+        st.write("Total RT: ", int(sum_RT))
+
         
         
 

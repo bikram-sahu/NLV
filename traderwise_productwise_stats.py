@@ -61,8 +61,8 @@ def main():
             result = login_user(username,check_hashes(password,hashed_pswd))
             if result:
                 st.sidebar.success("Logged In as {}".format(username))
-                productwise_data = "/MTDPL.xlsx"
-                transaction_data_file = "/Transactions Jan-21.xlsx"
+                productwise_data = "/MTDPL-27-Jan.xlsx"
+                transaction_data_file = "/Transactions 27-Jan-21.xlsx"
                 qtr_data, transaction_data = load_data(productwise_data, transaction_data_file)
                 transaction_raw, instrument_name = load_transaction_data(transaction_data_file)
 
@@ -127,7 +127,7 @@ def color_negative_red(val):
 
 def run_analytics(analytics_by, qtr_data, transaction_data, transaction_raw, instrument_name):
     if analytics_by == "Mumbai":
-        st.write(transaction_data)
+        #st.write(transaction_data)
         by_client = qtr_data.groupby(['Client'], as_index=False)
         
 

@@ -8,7 +8,7 @@ import copy
 
 import dropbox
 
-token = "ogCBN3Of8vMAAAAAAAAAAeokgvH2eZ1cGgVSQDOqLNFkOYKqykgroZ8O9jfc_mMi"
+token = "VxZJ61zTijgAAAAAAAAAATiNeOOajjeNc47H1krHeuyNc9qpVA1g0htEGSHSIYXl"
 dbx = dropbox.Dropbox(token)
 
 
@@ -61,12 +61,14 @@ def main():
             result = login_user(username,check_hashes(password,hashed_pswd))
             if result:
                 st.sidebar.success("Logged In as {}".format(username))
-                productwise_data = "/MTDPL-27-Jan.xlsx"
+                productwise_data = "/MTDPL 28-Jan-2021.xlsx"
                 transaction_data_file = "/Transactions 27-Jan-21.xlsx"
+                st.sidebar.write("PnL Data as of: " + "28-Jan-2021")
+                st.sidebar.write("RT data as of: " + "27-Jan-21")
                 qtr_data, transaction_data = load_data(productwise_data, transaction_data_file)
                 transaction_raw, instrument_name = load_transaction_data(transaction_data_file)
 
-                analytics_by = st.sidebar.selectbox("Select", ["Mumbai", "Overall Stats"])
+                analytics_by = st.sidebar.selectbox("Select the branch", ["Overall Stats", "Mumbai", "Kolkata"])
                 run_analytics(analytics_by, qtr_data, transaction_data, transaction_raw, instrument_name)
             else:
                 st.warning("Incorrect Username/Password")
@@ -174,6 +176,58 @@ def run_analytics(analytics_by, qtr_data, transaction_data, transaction_raw, ins
         sum_RT = mumbai_final["RT"].sum()
         mumbai_final = mumbai_final.style.applymap(color_negative_red, subset=pd.IndexSlice[:, ['Total']])
         st.dataframe(mumbai_final.format({"RT": '{:.0f}', 'Total': '{:.0f}'}), height=2500)
+        st.write("Total PnL: ", int(sum_Total))
+        st.write("Total RT: ", int(sum_RT))
+
+
+    if analytics_by == "Kolkata":
+        #st.write(transaction_data)
+        by_client = qtr_data.groupby(['Client'], as_index=False)
+        
+
+        with open("kolkata_traders.txt") as file:
+            kolkata_traders_list = [line.strip() for line in file]
+
+        
+        st.markdown("**Traderwise Stats (Kolkata)**")
+        client_num = st.selectbox("Select a Client Id", kolkata_traders_list)
+        per_client = by_client.get_group(client_num)
+
+        df1 = per_client.groupby(["Contract Group", "Contract Sub Group", "Contract Code"], as_index=False).sum()
+        df2 = transaction_data.loc[client_num].fillna(0).div(2)
+        df1["RT"] = df1["Contract Code"].apply(lambda x: df2.loc[x])
+
+        kolkata = pd.DataFrame()
+        for trader in kolkata_traders_list:
+            df = by_client.get_group(trader)
+            df11 = df.groupby(["Contract Code"], as_index=False).sum()
+            df22 = transaction_data.loc[trader].fillna(0).div(2)
+            df11["RT"] = df11["Contract Code"].apply(lambda x: df22.loc[x])
+            result = pd.concat([kolkata, df11])
+            kolkata = result
+
+        contract_names = copy.deepcopy(transaction_raw)
+        contract_names.drop(columns=["Sum of Qty"], inplace=True)
+        contract_names = contract_names.rename(columns={"Instruments": "Contract Code"}, errors="raise") 
+
+        sum_Total = df1["Total"].sum()
+        sum_RT = df1["RT"].sum()
+        df1 = df1.style.applymap(color_negative_red, subset=pd.IndexSlice[:, ['Total']])
+        st.dataframe(df1.format({'RT': '{:.0f}', 'Total': '{:.0f}'}), height=2500)
+
+        st.write("Total PnL: ", int(sum_Total))
+        st.write("Total RT: ", int(sum_RT))
+
+        st.markdown("**All Traders (kolkata)**")
+        kolkata = kolkata.groupby("Contract Code", as_index=False).sum()
+        kolkata_final = pd.merge(contract_names,  
+                      kolkata,  
+                      on ='Contract Code')
+
+        sum_Total = kolkata_final["Total"].sum()
+        sum_RT = kolkata_final["RT"].sum()
+        kolkata_final = kolkata_final.style.applymap(color_negative_red, subset=pd.IndexSlice[:, ['Total']])
+        st.dataframe(kolkata_final.format({"RT": '{:.0f}', 'Total': '{:.0f}'}), height=2500)
         st.write("Total PnL: ", int(sum_Total))
         st.write("Total RT: ", int(sum_RT))
 

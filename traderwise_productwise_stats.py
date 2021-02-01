@@ -194,7 +194,7 @@ def run_analytics(analytics_by, qtr_data, transaction_data, transaction_raw, ins
         client_num = st.selectbox("Select a Client Id", kolkata_traders_list)
         per_client = by_client.get_group(client_num)
 
-        df1 = per_client.groupby(["Contract Group", "Contract Sub Group", "Contract Code"], as_index=False).sum()
+        df1 = per_client.groupby(["Contract Code"], as_index=False).sum()
         df2 = transaction_data.loc[client_num].fillna(0).div(2)
         df1["RT"] = df1["Contract Code"].apply(lambda x: df2.loc[x])
 

@@ -62,9 +62,9 @@ def main():
             if result:
                 st.sidebar.success("Logged In as {}".format(username))
                 productwise_data = "/MTDPL 29-Jan-2021.xlsx"
-                transaction_data_file = "/Transactions 27-Jan-21.xlsx"
-                st.sidebar.write("PnL Data as of: " + "29-Jan-2021")
-                st.sidebar.write("RT data as of: " + "27-Jan-2021")
+                transaction_data_file = "/Transactions 29-Jan-2021.xlsx"
+                st.sidebar.write("Gross PnL Data as of: " + "29-Jan-2021")
+                st.sidebar.write("RT data as of: " + "29-Jan-2021")
                 qtr_data, transaction_data = load_data(productwise_data, transaction_data_file)
                 transaction_raw, instrument_name = load_transaction_data(transaction_data_file)
 

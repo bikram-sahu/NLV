@@ -22,13 +22,17 @@ def check_hashes(password,hashed_text):
 	if make_hashes(password) == hashed_text:
 		return hashed_text
 	return False
+
 # DB Management
 import sqlite3 
 conn = sqlite3.connect('data.db')
 c = conn.cursor()
 # DB  Functions
 def create_usertable():
-	c.execute('CREATE TABLE IF NOT EXISTS userstable(username TEXT,password TEXT)')
+	c.execute("""CREATE TABLE IF NOT EXISTS userstable (
+        username TEXT,
+        password TEXT
+    )""")
 
 
 def add_userdata(username,password):
@@ -60,12 +64,14 @@ def main():
             hashed_pswd = make_hashes(password)
             result = login_user(username,check_hashes(password,hashed_pswd))
             if result:
-                st.sidebar.success("Logged In as {}".format(username))
-                productwise_data = "/MTDPL 29-Jan-2021.xlsx"
-                transaction_data_file = "/Transactions 29-Jan-2021.xlsx"
-                st.sidebar.write("Gross PnL Data as of: " + "29-Jan-2021")
-                st.sidebar.write("RT data as of: " + "29-Jan-2021")
-                qtr_data, transaction_data = load_data(productwise_data, transaction_data_file)
+                st.markdown("### Last updated on: 03-Feb-2021")
+                month_selected = st.sidebar.selectbox('Select a month', ["Feb 2021", "Jan 2021"])
+                #st.sidebar.success("Logged In as {}".format(username))
+                mtd_gross_pnl = "/" + month_selected + "/MTDPL.xlsx"
+                transaction_data_file = "/" + month_selected + "/Transactions.xlsx"
+                #st.sidebar.write("Gross PnL Data as of: " + "29-Jan-2021")
+                #st.sidebar.write("RT data as of: " + "29-Jan-2021")
+                qtr_data, transaction_data = load_data(mtd_gross_pnl, transaction_data_file)
                 transaction_raw, instrument_name = load_transaction_data(transaction_data_file)
 
                 analytics_by = st.sidebar.selectbox("Select the branch", ["Overall Stats", "Mumbai", "Kolkata"])
@@ -86,10 +92,10 @@ def main():
     
 
 @st.cache
-def load_data(productwise_data, transaction_data_file):
+def load_data(mtd_gross_pnl, transaction_data_file):
     global qtr_data, transaction_data
 
-    _, f = dbx.files_download(productwise_data)
+    _, f = dbx.files_download(mtd_gross_pnl)
     f = f.content
 
     qtr_data = pd.read_excel(f, sheet_name = "Gross PNL By Product", engine='openpyxl')
@@ -112,7 +118,7 @@ def load_transaction_data(transaction_data_file):
     transaction_raw = pd.read_excel(f, sheet_name="Sheet3", engine='openpyxl')
 
     instrument_name = pd.read_excel(f, sheet_name="Sheet5", engine='openpyxl')
-    transaction_raw.drop([0, 85, 86], inplace=True)
+    #transaction_raw.drop([0, 85, 86], inplace=True)
     return transaction_raw, instrument_name
 
 
@@ -134,24 +140,31 @@ def run_analytics(analytics_by, qtr_data, transaction_data, transaction_raw, ins
         
 
         with open("mumbai_traders.txt") as file:
-            mumbai_traders_list = [line.strip() for line in file]
+            mumbai_traders = [line.strip() for line in file]
 
         
         st.markdown("**Traderwise Stats (Mumbai)**")
+        all_traders = set(qtr_data.Client.unique())
+        mumbai_traders_list = []
+        for trader in mumbai_traders:
+            if trader in all_traders:
+                mumbai_traders_list.append(trader)
+
+
         client_num = st.selectbox("Select a Client Id", mumbai_traders_list)
         per_client = by_client.get_group(client_num)
 
         #df1 = per_client.groupby(["Contract Group", "Contract Sub Group", "Contract Code"], as_index=False).sum()
         df1 = per_client.groupby(["Contract Code"], as_index=False).sum()
         df2 = transaction_data.loc[client_num].fillna(0).div(2)
-        df1["RT"] = df1["Contract Code"].apply(lambda x: df2.loc[x])
+        df1["RT"] = df1["Contract Code"].apply(lambda x: df2.loc[x] if x in df2 else 0)
 
         mumbai = pd.DataFrame()
         for trader in mumbai_traders_list:
             df = by_client.get_group(trader)
             df11 = df.groupby(["Contract Code"], as_index=False).sum()
             df22 = transaction_data.loc[trader].fillna(0).div(2)
-            df11["RT"] = df11["Contract Code"].apply(lambda x: df22.loc[x])
+            df11["RT"] = df11["Contract Code"].apply(lambda x: df22.loc[x] if x in df22 else 0)
             result = pd.concat([mumbai, df11])
             mumbai = result
 
@@ -187,23 +200,31 @@ def run_analytics(analytics_by, qtr_data, transaction_data, transaction_raw, ins
         
 
         with open("kolkata_traders.txt") as file:
-            kolkata_traders_list = [line.strip() for line in file]
+            kolkata_traders = [line.strip() for line in file]
 
         
         st.markdown("**Traderwise Stats (Kolkata)**")
+        all_traders = set(qtr_data.Client.unique())
+        kolkata_traders_list = []
+        for trader in kolkata_traders:
+            if trader in all_traders:
+                kolkata_traders_list.append(trader)
+
+
         client_num = st.selectbox("Select a Client Id", kolkata_traders_list)
         per_client = by_client.get_group(client_num)
 
+        #df1 = per_client.groupby(["Contract Group", "Contract Sub Group", "Contract Code"], as_index=False).sum()
         df1 = per_client.groupby(["Contract Code"], as_index=False).sum()
         df2 = transaction_data.loc[client_num].fillna(0).div(2)
-        df1["RT"] = df1["Contract Code"].apply(lambda x: df2.loc[x])
+        df1["RT"] = df1["Contract Code"].apply(lambda x: df2.loc[x] if x in df2 else 0)
 
         kolkata = pd.DataFrame()
         for trader in kolkata_traders_list:
             df = by_client.get_group(trader)
             df11 = df.groupby(["Contract Code"], as_index=False).sum()
             df22 = transaction_data.loc[trader].fillna(0).div(2)
-            df11["RT"] = df11["Contract Code"].apply(lambda x: df22.loc[x])
+            df11["RT"] = df11["Contract Code"].apply(lambda x: df22.loc[x] if x in df22 else 0)
             result = pd.concat([kolkata, df11])
             kolkata = result
 
@@ -231,7 +252,7 @@ def run_analytics(analytics_by, qtr_data, transaction_data, transaction_raw, ins
         st.dataframe(kolkata_final.format({"RT": '{:.0f}', 'Total': '{:.0f}'}), height=2500)
         st.write("Total PnL: ", int(sum_Total))
         st.write("Total RT: ", int(sum_RT))
-
+        
         
         
 

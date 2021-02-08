@@ -164,9 +164,15 @@ def run_analytics(analytics_by, qtr_data, transaction_data, transaction_raw, ins
             df = by_client.get_group(trader)
             df11 = df.groupby(["Contract Code"], as_index=False).sum()
             df22 = transaction_data.loc[trader].fillna(0).div(2)
+            s = pd.Series([trader] * len(df11))
+            df11.set_index(s, inplace=True)
             df11["RT"] = df11["Contract Code"].apply(lambda x: df22.loc[x] if x in df22 else 0)
             result = pd.concat([mumbai, df11])
+            
+            
             mumbai = result
+
+        
 
         contract_names = copy.deepcopy(transaction_raw)
         contract_names.drop(columns=["Sum of Qty"], inplace=True)
@@ -180,6 +186,10 @@ def run_analytics(analytics_by, qtr_data, transaction_data, transaction_raw, ins
         st.write("Total PnL: ", int(sum_Total))
         st.write("Total RT: ", int(sum_RT))
 
+        if st.button('Download in Excel Trader-wise Product-wise Stats (MUMBAI)'):
+            with pd.ExcelWriter('Traderwise-Productwise-Stats-Mumbai.xlsx') as writer:
+                mumbai.to_excel(writer, sheet_name='Mumbai Traderwise')
+
         st.markdown("**All Traders (Mumbai)**")
         mumbai = mumbai.groupby("Contract Code", as_index=False).sum()
         mumbai_final = pd.merge(contract_names,  
@@ -192,6 +202,11 @@ def run_analytics(analytics_by, qtr_data, transaction_data, transaction_raw, ins
         st.dataframe(mumbai_final.format({"RT": '{:.0f}', 'Total': '{:.0f}'}), height=2500)
         st.write("Total PnL: ", int(sum_Total))
         st.write("Total RT: ", int(sum_RT))
+        if st.button('Download in Excel Product-wise Stats for All traders Mumbai'):
+            with pd.ExcelWriter('Productwise-Stats-Mumbai.xlsx') as writer:  
+                mumbai_final.to_excel(writer, sheet_name='Mumbai')
+
+
 
 
     if analytics_by == "Kolkata":
@@ -224,6 +239,8 @@ def run_analytics(analytics_by, qtr_data, transaction_data, transaction_raw, ins
             df = by_client.get_group(trader)
             df11 = df.groupby(["Contract Code"], as_index=False).sum()
             df22 = transaction_data.loc[trader].fillna(0).div(2)
+            s = pd.Series([trader] * len(df11))
+            df11.set_index(s, inplace=True)
             df11["RT"] = df11["Contract Code"].apply(lambda x: df22.loc[x] if x in df22 else 0)
             result = pd.concat([kolkata, df11])
             kolkata = result
@@ -240,7 +257,11 @@ def run_analytics(analytics_by, qtr_data, transaction_data, transaction_raw, ins
         st.write("Total PnL: ", int(sum_Total))
         st.write("Total RT: ", int(sum_RT))
 
-        st.markdown("**All Traders (kolkata)**")
+        if st.button('Download in Excel Trader-wise Product-wise Stats (Kolkata)'):
+            with pd.ExcelWriter('Traderwise-Productwise-Stats-Kolkata.xlsx') as writer:
+                kolkata.to_excel(writer, sheet_name='Kolkata Traderwise')
+
+        st.markdown("**All Traders (Kolkata)**")
         kolkata = kolkata.groupby("Contract Code", as_index=False).sum()
         kolkata_final = pd.merge(contract_names,  
                       kolkata,  
@@ -252,6 +273,9 @@ def run_analytics(analytics_by, qtr_data, transaction_data, transaction_raw, ins
         st.dataframe(kolkata_final.format({"RT": '{:.0f}', 'Total': '{:.0f}'}), height=2500)
         st.write("Total PnL: ", int(sum_Total))
         st.write("Total RT: ", int(sum_RT))
+        if st.button('Download in Excel Product-wise Stats for All traders Kolkata'):
+            with pd.ExcelWriter('Productwise-Stats-Kolkata.xlsx') as writer:  
+                kolkata_final.to_excel(writer, sheet_name='Kolkata')
         
         
         

@@ -4,6 +4,9 @@ import pandas as pd
 import os
 import copy
 
+import base64
+from io import BytesIO
+
 
 
 import dropbox
@@ -50,8 +53,27 @@ def view_all_users():
 	data = c.fetchall()
 	return data
 
+def to_excel(df):
+    output = BytesIO()
+    writer = pd.ExcelWriter(output, engine='xlsxwriter')
+    df.to_excel(writer, sheet_name='Sheet1')
+    writer.save()
+    processed_data = output.getvalue()
+    return processed_data
+
+def get_table_download_link(df):
+    """Generates a link allowing the data in a given panda dataframe to be downloaded
+    in:  dataframe
+    out: href string
+    """
+    val = to_excel(df)
+    b64 = base64.b64encode(val)  # val looks like b'...'
+    return f'<a href="data:application/octet-stream;base64,{b64.decode()}" download="productwise.xlsx">Download Excel file</a>' # decode b'abc' => abc
+
+
 
 def main():
+    global month_selected
     st.sidebar.title("Month to Date Productwise Statistics")
     app_mode = st.sidebar.selectbox("Mode",
                                     ["Login", "SignUp"])
@@ -186,9 +208,7 @@ def run_analytics(analytics_by, qtr_data, transaction_data, transaction_raw, ins
         st.write("Total PnL: ", int(sum_Total))
         st.write("Total RT: ", int(sum_RT))
 
-        if st.button('Download in Excel Trader-wise Product-wise Stats (MUMBAI)'):
-            with pd.ExcelWriter('Traderwise-Productwise-Stats-Mumbai.xlsx') as writer:
-                mumbai.to_excel(writer, sheet_name='Mumbai Traderwise')
+        st.markdown(get_table_download_link(mumbai), unsafe_allow_html=True)
 
         st.markdown("**All Traders (Mumbai)**")
         mumbai = mumbai.groupby("Contract Code", as_index=False).sum()
@@ -202,9 +222,7 @@ def run_analytics(analytics_by, qtr_data, transaction_data, transaction_raw, ins
         st.dataframe(mumbai_final.format({"RT": '{:.0f}', 'Total': '{:.0f}'}), height=2500)
         st.write("Total PnL: ", int(sum_Total))
         st.write("Total RT: ", int(sum_RT))
-        if st.button('Download in Excel Product-wise Stats for All traders Mumbai'):
-            with pd.ExcelWriter('Productwise-Stats-Mumbai.xlsx') as writer:  
-                mumbai_final.to_excel(writer, sheet_name='Mumbai')
+        st.markdown(get_table_download_link(mumbai_final), unsafe_allow_html=True)
 
 
 
@@ -257,9 +275,7 @@ def run_analytics(analytics_by, qtr_data, transaction_data, transaction_raw, ins
         st.write("Total PnL: ", int(sum_Total))
         st.write("Total RT: ", int(sum_RT))
 
-        if st.button('Download in Excel Trader-wise Product-wise Stats (Kolkata)'):
-            with pd.ExcelWriter('Traderwise-Productwise-Stats-Kolkata.xlsx') as writer:
-                kolkata.to_excel(writer, sheet_name='Kolkata Traderwise')
+        st.markdown(get_table_download_link(kolkata), unsafe_allow_html=True)
 
         st.markdown("**All Traders (Kolkata)**")
         kolkata = kolkata.groupby("Contract Code", as_index=False).sum()
@@ -273,9 +289,7 @@ def run_analytics(analytics_by, qtr_data, transaction_data, transaction_raw, ins
         st.dataframe(kolkata_final.format({"RT": '{:.0f}', 'Total': '{:.0f}'}), height=2500)
         st.write("Total PnL: ", int(sum_Total))
         st.write("Total RT: ", int(sum_RT))
-        if st.button('Download in Excel Product-wise Stats for All traders Kolkata'):
-            with pd.ExcelWriter('Productwise-Stats-Kolkata.xlsx') as writer:  
-                kolkata_final.to_excel(writer, sheet_name='Kolkata')
+        st.markdown(get_table_download_link(kolkata_final), unsafe_allow_html=True)
         
         
         

@@ -55,7 +55,7 @@ def view_all_users():
 
 def to_excel(df):
     output = BytesIO()
-    writer = pd.ExcelWriter(output, engine='xlsxwriter')
+    writer = pd.ExcelWriter(output, engine='openpyxl')
     df.to_excel(writer, sheet_name='Sheet1')
     writer.save()
     processed_data = output.getvalue()

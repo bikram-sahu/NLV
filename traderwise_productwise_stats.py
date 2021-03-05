@@ -86,8 +86,8 @@ def main():
             hashed_pswd = make_hashes(password)
             result = login_user(username,check_hashes(password,hashed_pswd))
             if result:
-                st.markdown("### Last updated data is as of: 26-Feb-2021")
-                month_selected = st.sidebar.selectbox('Select a month', ["Feb 2021", "Jan 2021"])
+                st.markdown("### Last updated data is as of: 4-March-2021")
+                month_selected = st.sidebar.selectbox('Select a month', ["Mar 2021", "Feb 2021", "Jan 2021"])
                 #st.sidebar.success("Logged In as {}".format(username))
                 mtd_gross_pnl = "/" + month_selected + "/MTDPL.xlsx"
                 transaction_data_file = "/" + month_selected + "/Transactions.xlsx"

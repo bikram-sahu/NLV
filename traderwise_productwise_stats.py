@@ -308,7 +308,7 @@ def run_analytics(analytics_by, qtr_data, transaction_data, transaction_raw, ins
         st.write("MTD Sum of Qty:", int(inner_join["Sum of Qty"].sum()))
 
         inner_join = inner_join.style.applymap(color_negative_red, subset=pd.IndexSlice[:, ['Total']])
-        df_company = inner_join.format({'Sum of Qty': '{:.0f}', 'Total': '{:.0f}'}
+        df_company = inner_join.format({'Sum of Qty': '{:.0f}', 'Total': '{:.0f}'})
         st.dataframe(inner_join.format({'Sum of Qty': '{:.0f}', 'Total': '{:.0f}'}), height=2500)
         st.markdown(get_table_download_link(df_company), unsafe_allow_html=True)
     
